@@ -4,9 +4,9 @@
 
 		private $conn;
 
-		function __construct($servername, $username, $password, $dbname){
+		function __construct($config){
 
-			$this->conn = new mysqli($servername, $username, $password, $dbname);
+			$this->conn = new mysqli($config['host'], $config['username'], $config['password'], $config['database']);
 
 			if($conn->connect_error)
 			{

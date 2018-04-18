@@ -6,7 +6,7 @@
 
 		public static function createTable($db){
 
-			$sql = "CREATE TABLE " . self::$table_name . " (
+			$sql = "CREATE TABLE IF NOT EXISTS " . self::$table_name . " (
 										id INT(6) UNSIGNED AUTO_INCREMENT PRIMARY KEY, 
 										name VARCHAR(100) NOT NULL,
 										start_date INTEGER(9) NOT NULL,
@@ -32,6 +32,60 @@
 
 		}
 
+		public static function getRandom($db){
+
+			$result = $db->querySelect("SELECT COUNT(*) FROM " . self::getTableName());
+
+			$row = mysqli_fetch_array($result, MYSQLI_NUM);
+
+			$rand_row = rand(0, ($row[0]-1));
+
+			$result = $db->querySelect("SELECT * FROM " . self::getTableName() . " LIMIT " . $rand_row . ", 1");
+
+			return new self(mysqli_fetch_array($result, MYSQLI_NUM));
+
+		}
+
+		public static function exportFrom($filename){
+
+			$actions = [];
+
+			if(file_exists(FILENAME)){
+
+				$row = 1;
+
+				if(($handle = fopen(FILENAME, "r")) !== FALSE)
+				{
+
+					while(($line = fgetcsv($handle, 10000, ";")) !== FALSE)
+					{
+
+						if($row === 1)
+						{
+
+							$row++;
+							continue;
+
+						} else $row++;
+
+						$actions[] = new self($line);
+
+					}
+
+					fclose($handle);
+
+					return $actions;
+
+				}
+				
+			} else {
+
+				echo "File " . FILENAME . " does not exist<br>";
+
+			}
+
+		}
+
 		private $id;
 		private $name;
 		private $start_date;
@@ -46,6 +100,23 @@
 			else $this->start_date = $arr[2];
 			$this->finish_date = $arr[3];
 			$this->status = $arr[4];
+
+		}
+
+		static function sanitize($data){
+
+			return htmlspecialchars(stripslashes(trim($data)));
+
+		}
+
+		function validate(){
+
+			$this->id = self::sanitize($this->id);
+			$this->name = self::sanitize($this->name);
+			$this->start_date = self::sanitize($this->start_date);
+			$this->finish_date = self::sanitize($this->finish_date);
+			$this->status = self::sanitize($this->status);
+			return $this;
 
 		}
 
